@@ -126,6 +126,7 @@ function createBrowserView() {
   const mainWindowBounds = mainWindow.getBounds();
 
   messagesView = new BrowserView({
+    titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -149,6 +150,29 @@ function createBrowserView() {
   });
 
   messagesView.webContents.loadURL(targetUrl);
+
+  messagesView.webContents.on('new-window', (event, url, frameName, disposition, options) => {
+    event.preventDefault();
+    const guestOptions = {
+      width: 1180,
+      height: 620,
+      titleBarStyle: 'hidden',
+      webContents: options.webContents, // use existing webContents if provided
+      show: false,
+      webPreferences: {
+        nodeIntegration: false,
+      },
+    };
+
+    const guestWindow = new BrowserWindow(guestOptions);
+    guestWindow.once('ready-to-show', () => guestWindow.show());
+
+    if (!options.webContents) {
+      guestWindow.loadURL(url); // existing webContents will be navigated automatically
+    }
+    // eslint-disable-next-line no-param-reassign
+    event.newGuest = guestWindow;
+  });
 
   if (debug) messagesView.webContents.openDevTools({ mode: 'right' });
 }
