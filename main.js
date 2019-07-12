@@ -297,6 +297,7 @@ function initialize() {
       width: mainWindowState.width,
       height: mainWindowState.height,
       titleBarStyle: 'hidden',
+      autoHideMenuBar: true,
       title: app.getName(),
       webPreferences: {
         nodeIntegration: false,
