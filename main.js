@@ -122,35 +122,56 @@ function registerGlobalShortcuts() {
   });
 }
 
-function createBrowserView() {
-  const mainWindowBounds = mainWindow.getBounds();
+function getWebViewBounds() {
+  // Platforms
+  //
+  // 'aix'
+  // 'darwin'
+  // 'freebsd'
+  // 'linux'
+  // 'openbsd'
+  // 'sunos'
+  // 'win32'
 
-  messagesView = new BrowserView({
-    titleBarStyle: 'hidden',
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
-  });
+  // TODO: This is a quick fix, need to find a more elegant way to do this.
+  //    Possible solution: https://electronjs.org/docs/api/browser-window#winsetautohidemenubarhide
+  //
+  const contentBounds = mainWindow.getContentBounds();
+  // const menuBarHeight = 25;
 
-  mainWindow.setBrowserView(messagesView);
-
-  const desiredWidth = debug ? Math.round(mainWindowBounds.width * 0.7) : mainWindowBounds.width;
-
-  messagesView.setBounds({
+  // Set defaults
+  const bounds = {
     x: 0,
     y: 0,
-    width: desiredWidth,
-    height: mainWindowBounds.height,
-  });
+    width: contentBounds.width,
+    height: contentBounds.height,
+  };
 
-  messagesView.setAutoResize({
-    width: true,
-    height: true,
-  });
+  // Supported Platform specific bounds
+  // switch (process.platform) {
+  //   case 'darwin':
+  //     // Do nothing
+  //     break;
+  //   case 'linux':
+  //     // bounds.y = menuBarHeight;
+  //     // bounds.height -= menuBarHeight;
+  //     break;
+  //   case 'win32':
+  //     // bounds.y = menuBarHeight;
+  //     // bounds.height -= menuBarHeight;
+  //     break;
+  //   default:
+  //     break;
+  // }
 
-  messagesView.webContents.loadURL(targetUrl);
+  if (debug) {
+    bounds.width = Math.round(contentBounds.width * 0.7);
+  }
 
+  return bounds;
+}
+
+function handleGuestWindow() {
   messagesView.webContents.on('new-window', (event, url, frameName, disposition, options) => {
     event.preventDefault();
     const guestOptions = {
@@ -173,6 +194,31 @@ function createBrowserView() {
     // eslint-disable-next-line no-param-reassign
     event.newGuest = guestWindow;
   });
+}
+
+function createBrowserView() {
+  const bounds = getWebViewBounds();
+
+  messagesView = new BrowserView({
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  mainWindow.setBrowserView(messagesView);
+
+  messagesView.setBounds(bounds);
+
+  messagesView.setAutoResize({
+    width: true,
+    height: true,
+  });
+
+  messagesView.webContents.loadURL(targetUrl);
+
+  handleGuestWindow();
 
   if (debug) messagesView.webContents.openDevTools({ mode: 'right' });
 }
@@ -297,6 +343,7 @@ function initialize() {
       width: mainWindowState.width,
       height: mainWindowState.height,
       titleBarStyle: 'hidden',
+      autoHideMenuBar: true,
       title: app.getName(),
       webPreferences: {
         nodeIntegration: false,
