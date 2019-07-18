@@ -21,7 +21,7 @@
   "build": {
     "appId": "org.rbiggers.messages",
     "mac": {
-      "category": "public.app-category.communication",
+      "category": "public.app-category.social-networking",
       "icon": "assets/icon/icon.icns"
     },
     "linux": {
